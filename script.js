@@ -204,6 +204,34 @@ document.addEventListener("DOMContentLoaded", function() {
     resultTextDiv.innerHTML = resultHTML;
     
     // グラフ描画：historicalな効率的フロンティアと各ポートフォリオの点
+
+ // --- グラフ描画部の修正 ---
+    // まず、選択されたペア（targetFund と bestCandidate）の純粋な効率的フロンティアを計算（予算制約無視）
+    let numPoints = 100;
+    let frontierRisks = [];
+    let frontierReturns = [];
+    for (let i = 0; i <= numPoints; i++) {
+      let w = i / numPoints; // 重み（ターゲットファンドの割合）
+      let ret = w * means[targetFund] + (1 - w) * means[bestCandidate];
+      let variance = (w ** 2) * variances[targetFund] 
+                   + ((1 - w) ** 2) * variances[bestCandidate]
+                   + 2 * w * (1 - w) * covMatrix[targetFund][bestCandidate];
+      let risk = Math.sqrt(variance);
+      frontierRisks.push(risk);
+      frontierReturns.push(ret);
+    }
+
+    
+// 青い線として描く純粋な効率的フロンティア
+    let tracePureFrontier = {
+      x: frontierRisks,
+      y: frontierReturns,
+      mode: 'lines',
+      name: 'Pure Efficient Frontier',
+      line: { color: 'blue', width: 2 }
+    };
+
+    
     let traceFrontier = {
       x: results.map(r => r.portfolioRisk),
       y: results.map(r => r.portfolioReturn),
@@ -218,13 +246,7 @@ document.addEventListener("DOMContentLoaded", function() {
       marker: { color: 'red', size: 10 },
       name: 'Max Sharpe Ratio'
     };
-    let traceCurrent = {
-      x: [currentPortfolioRisk],
-      y: [currentPortfolioReturn],
-      mode: 'markers',
-      marker: { color: 'blue', size: 10 },
-      name: 'Current Portfolio'
-    };
+   
     let traceNew = {
       x: [newPortfolioRisk],
       y: [newPortfolioReturn],
