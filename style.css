@@ -70,6 +70,9 @@ button:hover {
 
 #frontierChart {
   width: 100%;
+  max-width: 750px;  /* 必要に応じて調整 */
+  margin: 0 auto;     /* 中央寄せ */
+  overflow-x: auto;   /* はみ出したら横スクロール */
   height: 500px;
   border: 2px solid #388e3c; /* グリーンの枠線 */
   border-radius: 8px;
