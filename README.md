@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ファンド効率的フロンティア計算プログラム</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- Plotly と PapaParse の CDN -->
+  <!-- Plotly, PapaParse, SheetJS の CDN -->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
   <header>
@@ -16,17 +17,17 @@
   <main>
     <section id="instructions">
       <p>
-        仮データ CSV をアップロードしてください。<br>
-        CSV は 1 列目に「Date」列、その後に各ファンドの月次リターン（例："AYD", "GLB", など）が含まれている形式です。
+        仮データ CSV または Excel ファイル（.xlsx）をアップロードしてください。<br>
+        ファイルは 1 列目に「Date」列、その後に各ファンドの月次リターン（例："AYD", "GLB", など）が含まれている形式です。
       </p>
     </section>
     <section id="upload-section">
-      <input type="file" id="csvFileInput" accept=".csv">
+      <input type="file" id="csvFileInput" accept=".csv,.xlsx">
     </section>
     <section id="target-section">
       <label for="targetFundSelect">ターゲットファンド:</label>
       <select id="targetFundSelect">
-        <option value="">--CSVをアップロードしてください--</option>
+        <option value="">--ファイルをアップロードしてください--</option>
       </select>
     </section>
     <section id="calc-section">
