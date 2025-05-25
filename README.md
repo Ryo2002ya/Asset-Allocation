@@ -42,6 +42,10 @@
       <div id="frontierChart"></div>
     </section>
   </main>
+  
+  <!-- math.js を先に読み込む -->
+  <script src="math.js"></script>
+  <!-- メインロジック -->
   <script src="script.js"></script>
 </body>
 </html>
