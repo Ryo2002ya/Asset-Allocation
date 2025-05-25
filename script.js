@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function() {
       return;
     }
     
-    // ターゲットファンドが選択されているか確認
+    // ターゲットファンドの選択確認
     let targetFund = targetFundSelect.value;
     if (!targetFund) {
       alert("ターゲットファンドを選択してください。");
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     });
 
-    // ターゲットファンドと各候補ファンドとの組み合わせごとに統計的指標を算出
+    // ターゲットファンドと各候補ファンドとの組み合わせごとに統計指標を算出
     let results = [];
     funds.forEach(fund => {
       if (fund === targetFund) return;
@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function() {
       let sigmaCandidateSq = variances[fund];
       let covTargetCandidate = covMatrix[targetFund][fund];
       
-      // 解析的に求めた最小分散ポートフォリオの期待値に基づく重み
+      // 解析的な最小分散ポートフォリオの重み（historical optimal weight）
       let denominator = sigmaTargetSq + sigmaCandidateSq - 2 * covTargetCandidate;
       let wTarget = denominator !== 0 ? (sigmaCandidateSq - covTargetCandidate) / denominator : 0;
       wTarget = Math.max(0, Math.min(1, wTarget));
@@ -157,37 +157,61 @@ document.addEventListener("DOMContentLoaded", function() {
       results.push({ candidateFund: fund, weightTarget: wTarget, weightCandidate: wCandidate, portfolioReturn: portReturn, portfolioRisk: portRisk, sharpe: sharpe });
     });
     
-    // シャープレシオの高い順にソートし、最も効率的な候補ファンドを選択
+    // シャープレシオが高い順にソートし、最適な候補ファンドを選択
     results.sort((a, b) => b.sharpe - a.sharpe);
     let bestCandidateResult = results[0];
     let bestCandidate = bestCandidateResult.candidateFund;
     
-    // historical optimal weight（目安として）を利用
+    // historical optimal weight（目安として）
     let optimalWeightTarget = bestCandidateResult.weightTarget;
     
     // 追加投資を含む総投資額
     let totalPortfolio = currentHolding + extraFunds;
     // 理想的なターゲットファンドの最終保有額は totalPortfolio * optimalWeightTarget
     let idealTargetValue = totalPortfolio * optimalWeightTarget;
-    // 現在のターゲットファンドの保有額との差分を追加投資額として算出（マイナスの場合は 0 とする）
+    // 現在のターゲットファンドの保有額との差分を追加投資額として算出
     let additionalTarget = idealTargetValue - currentHolding;
     if(additionalTarget < 0) { additionalTarget = 0; }
     // 追加投資額からターゲットへの投資分を引いた残りを候補ファンドに投資
     let additionalCandidate = extraFunds - additionalTarget;
     
+    // 現状のポートフォリオ（現在はターゲットファンドのみ保有と仮定）
+    let currentPortfolioReturn = means[targetFund];
+    let currentPortfolioRisk = Math.sqrt(variances[targetFund]);
+    let currentPortfolioSharpe = currentPortfolioRisk !== 0 ? currentPortfolioReturn / currentPortfolioRisk : NaN;
+    
+    // 新規投資後のポートフォリオ（概算）の計算
+    let finalTargetValue = currentHolding + additionalTarget;
+    let finalCandidateValue = additionalCandidate; // 現在候補ファンドは未保有と仮定
+    let finalTotal = finalTargetValue + finalCandidateValue;
+    let finalWeightTarget = finalTotal > 0 ? finalTargetValue / finalTotal : 0;
+    let finalWeightCandidate = finalTotal > 0 ? finalCandidateValue / finalTotal : 0;
+    let newPortfolioReturn = finalWeightTarget * means[targetFund] + finalWeightCandidate * means[bestCandidate];
+    let newPortfolioRisk = finalWeightTarget * Math.sqrt(variances[targetFund]) + finalWeightCandidate * Math.sqrt(variances[bestCandidate]);
+    let newPortfolioSharpe = newPortfolioRisk !== 0 ? newPortfolioReturn / newPortfolioRisk : NaN;
+    
     // 結果の表示
     let resultHTML = `<p>ターゲットファンド: <strong>${targetFund}</strong></p>`;
     resultHTML += `<p>最も効率的な組み合わせ候補: <strong>${bestCandidate}</strong></p>`;
     resultHTML += `<p>歴史的データに基づく理想比率 (ターゲット): ${(optimalWeightTarget * 100).toFixed(2)}%</p>`;
+    resultHTML += `<h3>現状のポートフォリオ</h3>`;
+    resultHTML += `<p>現在、${targetFund} の保有額: ${currentHolding.toLocaleString()}円 (100%対象ファンド)</p>`;
+    resultHTML += `<p>期待リターン: ${currentPortfolioReturn.toFixed(4)}</p>`;
+    resultHTML += `<p>リスク: ${currentPortfolioRisk.toFixed(4)}</p>`;
+    resultHTML += `<p>シャープレシオ: ${currentPortfolioSharpe.toFixed(4)}</p>`;
     resultHTML += `<h3>追加投資の提案</h3>`;
-    resultHTML += `<p>現在の${targetFund}の保有額: ${currentHolding.toLocaleString()}円</p>`;
     resultHTML += `<p>追加投資額: ${extraFunds.toLocaleString()}円</p>`;
     resultHTML += `<p>${targetFund} に追加投資する提案額: ${additionalTarget.toFixed(0)}円</p>`;
     resultHTML += `<p>${bestCandidate} に追加投資する提案額: ${additionalCandidate.toFixed(0)}円</p>`;
+    resultHTML += `<h3>新規投資後のポートフォリオ (概算)</h3>`;
+    resultHTML += `<p>ターゲットファンド比率: ${(finalWeightTarget * 100).toFixed(2)}%、${bestCandidate}比率: ${(finalWeightCandidate * 100).toFixed(2)}%</p>`;
+    resultHTML += `<p>期待リターン (概算): ${newPortfolioReturn.toFixed(4)}</p>`;
+    resultHTML += `<p>リスク (概算): ${newPortfolioRisk.toFixed(4)}</p>`;
+    resultHTML += `<p>シャープレシオ (概算): ${newPortfolioSharpe.toFixed(4)}</p>`;
     
     resultTextDiv.innerHTML = resultHTML;
     
-    // グラフ描画（historicalな効率的フロンティア）
+    // グラフ描画 (historicalな効率的フロンティア)
     let traceFrontier = {
       x: results.map(r => r.portfolioRisk),
       y: results.map(r => r.portfolioReturn),
@@ -200,7 +224,25 @@ document.addEventListener("DOMContentLoaded", function() {
       y: [bestCandidateResult.portfolioReturn],
       mode: 'markers',
       marker: { color: 'red', size: 10 },
-      name: 'Max Sharpe Ratio Point'
+      name: 'Max Sharpe Ratio'
+    };
+
+    // 現状のポートフォリオの点（現在のターゲットのみ保有 → 100%）
+    let traceCurrent = {
+      x: [currentPortfolioRisk],
+      y: [currentPortfolioReturn],
+      mode: 'markers',
+      marker: { color: 'blue', size: 10 },
+      name: 'Current Portfolio'
+    };
+
+    // 新規投資後のポートフォリオ（概算）の点
+    let traceNew = {
+      x: [newPortfolioRisk],
+      y: [newPortfolioReturn],
+      mode: 'markers',
+      marker: { color: 'green', size: 10 },
+      name: 'New Portfolio'
     };
 
     let layout = {
@@ -209,6 +251,6 @@ document.addEventListener("DOMContentLoaded", function() {
       yaxis: { title: '期待リターン' }
     };
 
-    Plotly.newPlot(chartDiv, [traceFrontier, traceOptimal], layout);
+    Plotly.newPlot(chartDiv, [traceFrontier, traceOptimal, traceCurrent, traceNew], layout);
   });
 });
