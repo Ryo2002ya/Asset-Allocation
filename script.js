@@ -28,8 +28,7 @@ document.addEventListener("DOMContentLoaded", function() {
       header: true,
       dynamicTyping: true,
       complete: function(results) {
-        csvData = results.data;
-        csvData = csvData.filter(row => Object.keys(row).length > 1);
+        csvData = results.data.filter(row => Object.keys(row).length > 1);
         funds = Object.keys(csvData[0]).filter(key => key !== "Date");
         updateTargetFundSelect();
       },
@@ -45,7 +44,6 @@ document.addEventListener("DOMContentLoaded", function() {
     reader.onload = function(e) {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: "array" });
-      
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       
@@ -77,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // 平均・分散・共分散計算
+  // 計算関数
   function computeMean(arr) {
     return arr.reduce((a, b) => a + b, 0) / arr.length;
   }
@@ -155,7 +153,30 @@ document.addEventListener("DOMContentLoaded", function() {
     resultHTML += `<p>ポートフォリオ期待リターン: ${bestCandidateResult.portfolioReturn.toFixed(4)}</p>`;
     resultHTML += `<p>ポートフォリオリスク: ${bestCandidateResult.portfolioRisk.toFixed(4)}</p>`;
     resultHTML += `<p>シャープレシオ: ${bestCandidateResult.sharpe.toFixed(4)}</p>`;
-
     resultTextDiv.innerHTML = resultHTML;
+
+    // グラフ描画
+    let traceFrontier = {
+      x: results.map(r => r.portfolioRisk),
+      y: results.map(r => r.portfolioReturn),
+      mode: 'lines',
+      name: 'Efficient Frontier'
+    };
+
+    let traceOptimal = {
+      x: [bestCandidateResult.portfolioRisk],
+      y: [bestCandidateResult.portfolioReturn],
+      mode: 'markers',
+      marker: { color: 'red', size: 10 },
+      name: 'Max Sharpe Ratio Point'
+    };
+
+    let layout = {
+      title: '2ファンド組み合わせの効率的フロンティア',
+      xaxis: { title: 'リスク（標準偏差）' },
+      yaxis: { title: '期待リターン' }
+    };
+
+    Plotly.newPlot(chartDiv, [traceFrontier, traceOptimal], layout);
   });
 });
