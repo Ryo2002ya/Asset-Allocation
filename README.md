@@ -11,7 +11,7 @@
 </head>
 <body>
   <header>
-    <h1>ファンド効率的フロンティア計算プログラム</h1>
+    <h1>効率的フロンティア</h1>
   </header>
   <main>
     <section id="instructions">
