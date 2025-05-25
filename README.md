@@ -1,9 +1,8 @@
-<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ファンド効率的フロンティア計算プログラム</title>
+  <title>効率的フロンティア</title>
   <link rel="stylesheet" href="styles.css">
   <!-- Plotly, PapaParse, SheetJS の CDN -->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -18,7 +17,7 @@
     <section id="instructions">
       <p>
         仮データ CSV または Excel ファイル（.xlsx）をアップロードしてください。<br>
-        ファイルは 1 列目に「Date」列、その後に各ファンドの月次リターン（例："AYD", "GLB", など）が含まれている形式です。
+        ファイルは 1 列目に「Date」列、その後に各ファンドの月次リターンが含まれる形式です。
       </p>
     </section>
     <section id="upload-section">
