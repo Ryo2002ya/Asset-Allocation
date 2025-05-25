@@ -231,14 +231,6 @@ document.addEventListener("DOMContentLoaded", function() {
       line: { color: 'blue', width: 2 }
     };
 
-    
-    let traceFrontier = {
-      x: results.map(r => r.portfolioRisk),
-      y: results.map(r => r.portfolioReturn),
-      mode: 'lines',
-      name: 'Efficient Frontier',
-      line: { color:'#888', width: 2 }
-    };
     let traceOptimal = {
       x: [bestCandidateResult.portfolioRisk],
       y: [bestCandidateResult.portfolioReturn],
@@ -246,7 +238,14 @@ document.addEventListener("DOMContentLoaded", function() {
       marker: { color: 'red', size: 10 },
       name: 'Max Sharpe Ratio'
     };
-   
+   let traceCurrent = {
+      x: [currentPortfolioRisk],
+      y: [currentPortfolioReturn],
+      mode: 'markers',
+      marker: { color: 'blue', size: 10 },
+      name: 'Current Portfolio'
+    };
+
     let traceNew = {
       x: [newPortfolioRisk],
       y: [newPortfolioReturn],
