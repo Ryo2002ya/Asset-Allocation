@@ -6,6 +6,8 @@
   <title>効率的フロンティア計算</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
 </head>
 <body>
   <header>
@@ -49,7 +51,6 @@
       <div id="frontierChart"></div>
     </section>
   </main>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
