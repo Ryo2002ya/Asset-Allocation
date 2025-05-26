@@ -50,6 +50,6 @@
     </section>
   </main>
 
-  <script src="script.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 </body>
 </html>
