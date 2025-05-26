@@ -6,19 +6,21 @@ document.addEventListener("DOMContentLoaded", function() {
   const chartDiv = document.getElementById("frontierChart");
 
   function computeMean(arr) {
-    return arr.reduce((sum, val) => sum + val, 0) / arr.length;
+    return arr.length ? arr.reduce((sum, val) => sum + val, 0) / arr.length : NaN;
   }
 
   function computeVariance(arr, mean) {
-    return arr.reduce((acc, val) => acc + (val - mean) ** 2, 0) / arr.length;
+    return arr.length ? arr.reduce((acc, val) => acc + (val - mean) ** 2, 0) / arr.length : NaN;
   }
 
   function computeCovariance(arr1, mean1, arr2, mean2) {
-    return arr1.reduce((sum, val, i) => sum + (val - mean1) * (arr2[i] - mean2), 0) / arr1.length;
+    return arr1.length && arr2.length 
+      ? arr1.reduce((sum, val, i) => sum + (val - mean1) * (arr2[i] - mean2), 0) / arr1.length 
+      : NaN;
   }
 
   function loadCSV() {
-    fetch("C:/Users/ryoya/Downloads/仕事/仮データ.csv")
+    fetch("仮データ.csv") // Change this to a relative or uploaded path
       .then(response => response.text())
       .then(text => {
         csvData = Papa.parse(text, {
@@ -45,17 +47,20 @@ document.addEventListener("DOMContentLoaded", function() {
       fundData[fund] = csvData.map(row => parseFloat(row[fund])).filter(val => !isNaN(val));
     });
 
-    let means = {};
-    let variances = {};
+    let means = {}, variances = {};
     funds.forEach(fund => {
       let dataArr = fundData[fund];
+      if (!dataArr.length) return;
+
       let mean = computeMean(dataArr);
+      let variance = computeVariance(dataArr, mean);
+
       means[fund] = mean;
-      variances[fund] = computeVariance(dataArr, mean);
+      variances[fund] = variance;
     });
 
     let results = funds.map(fund => {
-      if (fund === targetFund) return null;
+      if (fund === targetFund || !means[fund] || !variances[fund]) return null;
 
       let sigmaTargetSq = variances[targetFund];
       let sigmaCandidateSq = variances[fund];
@@ -69,20 +74,23 @@ document.addEventListener("DOMContentLoaded", function() {
       let portReturn = wTarget * means[targetFund] + wCandidate * means[fund];
       let portVariance = (wTarget ** 2) * sigmaTargetSq + (wCandidate ** 2) * sigmaCandidateSq + 2 * wTarget * wCandidate * covTargetCandidate;
       let portRisk = Math.sqrt(portVariance);
-      let sharpe = (portRisk !== 0) ? portReturn / portRisk : NaN;
+      let sharpe = (portRisk !== 0) ? portReturn / portRisk : null;
 
-      return {
+      return (!isNaN(portRisk) && !isNaN(portReturn)) ? {
         candidateFund: fund,
         portfolioRisk: portRisk,
         portfolioReturn: portReturn,
         sharpe: sharpe
-      };
-    }).filter(r => r !== null && !isNaN(r.portfolioRisk) && !isNaN(r.portfolioReturn));
-
-    console.log(results);
+      } : null;
+    }).filter(r => r !== null);
 
     if (results.length === 0) {
       alert("有効なポートフォリオデータが取得できませんでした。");
+      return;
+    }
+
+    if (!chartDiv) {
+      console.error("chartDiv が取得できませんでした。");
       return;
     }
 
@@ -93,11 +101,6 @@ document.addEventListener("DOMContentLoaded", function() {
       name: "Efficient Frontier",
       line: { color: "#888", width: 2 }
     };
-
-    if (!chartDiv) {
-      console.error("chartDiv が取得できませんでした。");
-      return;
-    }
 
     Plotly.newPlot(chartDiv, [traceFrontier], {
       title: "2ファンド組み合わせの効率的フロンティア",
