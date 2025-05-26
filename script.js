@@ -1,150 +1,110 @@
-"use client";
+document.addEventListener("DOMContentLoaded", function() {  
+  let csvData = null;
+  let funds = [];
+  const calcButton = document.getElementById("calcButton");
+  const resultTextDiv = document.getElementById("resultText");
+  const chartDiv = document.getElementById("frontierChart");
 
-import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+  function computeMean(arr) {
+    return arr.reduce((sum, val) => sum + val, 0) / arr.length;
+  }
 
-type DataRow = Record<string, string | number>;
+  function computeVariance(arr, mean) {
+    return arr.reduce((acc, val) => acc + (val - mean) ** 2, 0) / arr.length;
+  }
 
-export default function Home() {
-  const [fileList, setFileList] = useState<string[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [data, setData] = useState<DataRow[]>([]);
-  const [columns, setColumns] = useState<string[]>([]);
-  const [xAxis, setXAxis] = useState<string | null>(null);
-  const [yAxis, setYAxis] = useState<string | null>(null);
+  function computeCovariance(arr1, mean1, arr2, mean2) {
+    return arr1.reduce((sum, val, i) => sum + (val - mean1) * (arr2[i] - mean2), 0) / arr1.length;
+  }
 
-  // 公開ディレクトリのファイル一覧を取得（手動で定義）
-  useEffect(() => {
-    // 公開ファイル一覧を手動定義（またはAPI経由で取得）
-    setFileList(["example1.csv", "example2.csv"]);
-  }, []);
+  function loadCSV() {
+    fetch("C:/Users/ryoya/Downloads/仕事/仮データ.csv")
+      .then(response => response.text())
+      .then(text => {
+        csvData = Papa.parse(text, {
+          header: true,
+          dynamicTyping: true
+        }).data;
 
-  const fetchCsv = async (filename: string) => {
-    const res = await fetch(`/data/${filename}`);
-    const text = await res.text();
-    const rows = text.trim().split("\n").map(row => row.split(","));
-    const headers = rows[0];
-    const dataObjects = rows.slice(1).map(row => {
-      const obj: DataRow = {};
-      headers.forEach((h, i) => {
-        const value = row[i];
-        const num = parseFloat(value);
-        obj[h] = isNaN(num) ? value : num;
-      });
-      return obj;
+        funds = Object.keys(csvData[0]).filter(key => key !== "Date");
+      })
+      .catch(error => console.error("CSV読み込みエラー:", error));
+  }
+
+  loadCSV(); // 自動でCSVを読み込む
+
+  calcButton.addEventListener("click", function() {
+    let targetFund = document.getElementById("targetFundSelect").value;
+    if (!targetFund) {
+      alert("ターゲットファンドを選択してください。");
+      return;
+    }
+
+    let fundData = {};
+    funds.forEach(fund => {
+      fundData[fund] = csvData.map(row => parseFloat(row[fund])).filter(val => !isNaN(val));
     });
-    setData(dataObjects);
-    setColumns(headers);
-    setXAxis(headers[0]);
-    setYAxis(headers[1]);
-  };
 
-  return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold mb-4">CSV 可視化サイト</h1>
+    let means = {};
+    let variances = {};
+    funds.forEach(fund => {
+      let dataArr = fundData[fund];
+      let mean = computeMean(dataArr);
+      means[fund] = mean;
+      variances[fund] = computeVariance(dataArr, mean);
+    });
 
-      <div className="mb-4">
-        <label className="block font-medium mb-1">ファイル選択</label>
-        <select
-          onChange={(e) => {
-            const filename = e.target.value;
-            setSelectedFile(filename);
-            fetchCsv(filename);
-          }}
-          value={selectedFile ?? ""}
-          className="border p-2 rounded w-full max-w-md"
-        >
-          <option value="">--- CSV ファイルを選んでください ---</option>
-          {fileList.map((file) => (
-            <option key={file} value={file}>
-              {file}
-            </option>
-          ))}
-        </select>
-      </div>
+    let results = funds.map(fund => {
+      if (fund === targetFund) return null;
 
-      {data.length > 0 && (
-        <Tabs defaultValue="chart" className="mt-6">
-          <TabsList>
-            <TabsTrigger value="chart">グラフ表示</TabsTrigger>
-            <TabsTrigger value="table">統計表示</TabsTrigger>
-          </TabsList>
+      let sigmaTargetSq = variances[targetFund];
+      let sigmaCandidateSq = variances[fund];
+      let covTargetCandidate = computeCovariance(fundData[targetFund], means[targetFund], fundData[fund], means[fund]);
 
-          <TabsContent value="chart">
-            <div className="flex gap-4 my-4">
-              <div>
-                <label className="block mb-1">X軸</label>
-                <select
-                  value={xAxis ?? ""}
-                  onChange={(e) => setXAxis(e.target.value)}
-                  className="border p-2 rounded"
-                >
-                  {columns.map((col) => (
-                    <option key={col} value={col}>
-                      {col}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block mb-1">Y軸</label>
-                <select
-                  value={yAxis ?? ""}
-                  onChange={(e) => setYAxis(e.target.value)}
-                  className="border p-2 rounded"
-                >
-                  {columns.map((col) => (
-                    <option key={col} value={col}>
-                      {col}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+      let denominator = sigmaTargetSq + sigmaCandidateSq - 2 * covTargetCandidate;
+      let wTarget = (denominator !== 0) ? (sigmaCandidateSq - covTargetCandidate) / denominator : 0;
+      wTarget = Math.max(0, Math.min(1, wTarget));
+      let wCandidate = 1 - wTarget;
 
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={data}>
-                <XAxis dataKey={xAxis!} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey={yAxis!} fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
-          </TabsContent>
+      let portReturn = wTarget * means[targetFund] + wCandidate * means[fund];
+      let portVariance = (wTarget ** 2) * sigmaTargetSq + (wCandidate ** 2) * sigmaCandidateSq + 2 * wTarget * wCandidate * covTargetCandidate;
+      let portRisk = Math.sqrt(portVariance);
+      let sharpe = (portRisk !== 0) ? portReturn / portRisk : NaN;
 
-          <TabsContent value="table">
-            <Card>
-              <CardContent className="overflow-x-auto p-4">
-                <table className="min-w-full border">
-                  <thead>
-                    <tr>
-                      {columns.map((col) => (
-                        <th key={col} className="border px-2 py-1 text-left bg-gray-100">
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.map((row, idx) => (
-                      <tr key={idx}>
-                        {columns.map((col) => (
-                          <td key={col} className="border px-2 py-1">
-                            {row[col]}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      )}
-    </main>
-  );
-}
+      return {
+        candidateFund: fund,
+        portfolioRisk: portRisk,
+        portfolioReturn: portReturn,
+        sharpe: sharpe
+      };
+    }).filter(r => r !== null && !isNaN(r.portfolioRisk) && !isNaN(r.portfolioReturn));
+
+    console.log(results);
+
+    if (results.length === 0) {
+      alert("有効なポートフォリオデータが取得できませんでした。");
+      return;
+    }
+
+    let traceFrontier = {
+      x: results.map(r => r.portfolioRisk),
+      y: results.map(r => r.portfolioReturn),
+      mode: "lines",
+      name: "Efficient Frontier",
+      line: { color: "#888", width: 2 }
+    };
+
+    if (!chartDiv) {
+      console.error("chartDiv が取得できませんでした。");
+      return;
+    }
+
+    Plotly.newPlot(chartDiv, [traceFrontier], {
+      title: "2ファンド組み合わせの効率的フロンティア",
+      xaxis: { title: "リスク（標準偏差）", tickformat: ".2f" },
+      yaxis: { title: "期待リターン", tickformat: ".2f" }
+    });
+
+    console.log("グラフ描画完了！");
+  });
+});
