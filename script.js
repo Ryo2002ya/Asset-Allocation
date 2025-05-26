@@ -1,4 +1,10 @@
 document.addEventListener("DOMContentLoaded", function() {  
+
+  const calcButton = document.getElementById("calcButton");
+  const resultTextDiv = document.getElementById("resultText");
+  const chartDiv = document.getElementById("frontierChart");
+  const targetFundSelect = document.getElementById("targetFundSelect");
+  
   let csvData = null;
   let funds = [];
   const calcButton = document.getElementById("calcButton");
