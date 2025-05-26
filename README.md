@@ -50,6 +50,6 @@
     </section>
   </main>
 
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </body>
 </html>
