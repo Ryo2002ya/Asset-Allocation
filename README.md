@@ -6,22 +6,15 @@
   <title>効率的フロンティア計算</title>
   <link rel="stylesheet" href="styles.css">
   <!-- Plotly, PapaParse, SheetJS の CDN -->
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  https://cdn.plot.ly/plotly-latest.min.js
+  https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js
+  <script src="https://cdnjs.cloudflare.com/ajax18.5/xlsx.full.min.js
 </head>
 <body>
   <header>
     <h1>効率的フロンティア</h1>
   </header>
   <main>
-    <!-- 説明 -->
-    <section id="instructions">
-      <p>
-        仮データ CSV または Excel ファイル (.xlsx) をアップロードしてください。<br>
-        ※ ファイルは1列目に「Date」、以降に各ファンドの月次リターン（例："AYD", "GLB" など）を含む形式とします。
-      </p>
-    </section>
     <!-- ファイルアップロード -->
     <section id="upload-section">
       <input type="file" id="csvFileInput" accept=".csv,.xlsx">
