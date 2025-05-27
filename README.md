@@ -23,7 +23,7 @@
     <section id="target-section">
       <label for="targetFundSelect">ターゲットファンド:</label>
       <select id="targetFundSelect">
-        <option value="">--ファイルをアップロードしてください--</option>
+        <option value="">--ファンドを選択-</option>
       </select>
     </section>
     <!-- 現在の保有額と追加投資額 -->
